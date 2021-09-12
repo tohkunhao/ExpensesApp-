@@ -240,6 +240,8 @@ class PieChart(Widget):
 
 # screen manager kivy
 # month_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+
 kv = Builder.load_file("Main.kv")
 Window.size = (1200, 675)
 Window.minimum_height = 675
