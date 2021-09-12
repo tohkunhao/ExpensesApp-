@@ -1,0 +1,241 @@
+WindowManager:
+    MainWindow:
+    InputWindow:
+
+
+<MainWindow>:
+    name: "main"
+    BoxLayout:
+        id: main_layout
+        orientation: "vertical"
+        BoxLayout:
+            size_hint: 1, 0.1
+            AnchorLayout:
+                anchor_x: "left"
+                padding: [10,0,0,0]
+                BoxLayout:
+                    size_hint: None, 0.5
+                    width: "220dp"
+                    Spinner:
+                        id: year_spinner
+                        text: "Year"
+                        size_hint: 0.4, 1
+                        on_text: root.UpdateMonth()
+                        values: root.dropdown_year
+                    Spinner:
+                        id: month_spinner
+                        text: "Month"
+                        size_hint: 0.6, 1
+                        values: root.dropdown_month
+                        on_text: root.UpdateMonthSubtotal()
+            AnchorLayout:
+                Button:
+                    text: "Time Series"
+                    size_hint: None, 0.5
+                    width: "200dp"
+                    disabled: True
+            AnchorLayout:
+                anchor_x: "right"
+                padding: [0,0,10,0]
+                Button:
+                    text: "+ New Expense"
+                    size_hint: None, 0.5
+                    width: "130dp"
+                    on_release:
+                        app.root.current = "input"
+                        root.manager.transition.direction = "left"
+        BoxLayout:
+            size_hint: 1, 0.8
+            BoxLayout:
+                size_hint: 0.5, 1
+                orientation: "vertical"
+                Label:
+                    text: "Month Summary"
+                    size_hint: 1, 0.05
+                PieChart:
+                    id: main_pie
+                    size_hint: 1, 0.95
+                    values: root.cat_subtotal
+                    on_values: self.on_size()
+            ScrollView:
+                id: pie_scroll
+                size_hint: 0.5, 1
+                do_scroll_x: False
+                do_scroll_y: True
+                BodyVerticalStack:
+                    size_hint: 1, None
+                    height: self.minimum_height
+                    Button:
+                        text: "Pie 1"
+                        size_hint: 0.5, None
+                        height: self.width
+                        disabled: True
+                    Button:
+                        text: "Pie 2"
+                        size_hint: 0.5, None
+                        height: self.width
+                        disabled: True
+                    Button:
+                        text: "Pie 3"
+                        size_hint: 0.5, None
+                        height: self.width
+                        disabled: True
+        AnchorLayout:
+            size_hint: 1, 0.1
+            anchor_x: "right"
+            padding:[0,0,10,0]
+            Button:
+                text: "A"
+                size_hint: None, 0.6
+                width: "75dp"
+                disabled: True
+
+
+<InputWindow>:
+    name: "input"
+    BoxLayout:
+        orientation: "vertical"
+        AnchorLayout:
+            id: input_window_top_bar
+            size_hint: 1, 0.1
+            anchor_x: "left"
+            padding: [10,0,0,0]
+            Button:
+                id: input_window_cancel
+                text: "Cancel"
+                size_hint: None, 0.6
+                width: "100dp"
+                on_release:
+                    root.ClearFormFields()
+                    app.root.current = "main"
+                    root.manager.transition.direction = "right"
+        BoxLayout:
+            size_hint: 1, 0.9
+            BoxLayout:
+                size_hint: 0.5, 1
+                orientation: "vertical"
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint: 1, 0.2
+                    BoxLayout:
+                        size_hint: 1, 0.25
+                    Label:
+                        text: "Item"
+                        size_hint: 1, 0.4
+                    BoxLayout:
+                        size_hint: 1, 0.35
+                        BoxLayout:
+                            size_hint: 0.2, 1
+                        TextInput:
+                            id: item_input
+                            size_hint: 0.6, 1
+                            multiline: False
+                        BoxLayout:
+                            size_hint: 0.2, 1
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint: 1, 0.2
+                    BoxLayout:
+                        size_hint: 1, 0.25
+                    Label:
+                        text: "Price"
+                        size_hint: 1, 0.4
+                    BoxLayout:
+                        size_hint: 1, 0.35
+                        BoxLayout:
+                            size_hint: 0.2, 1
+                        TextInput:
+                            id: price_input
+                            size_hint: 0.6, 1
+                            multiline: False
+                        BoxLayout:
+                            size_hint: 0.2, 1
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint: 1, 0.2
+                    BoxLayout:
+                        size_hint: 1, 0.25
+                    Label:
+                        text: "Category"
+                        size_hint: 1, 0.4
+                    BoxLayout:
+                        size_hint: 1, 0.35
+                        BoxLayout:
+                            size_hint: 0.2, 1
+                        TextInput:
+                            id: category_input
+                            size_hint: 0.6, 1
+                            multiline: False
+                        BoxLayout:
+                            size_hint: 0.2, 1
+                BoxLayout:
+                    size_hint: 1, 0.05
+                Label:
+                    text: "Expenditure Period"
+                    size_hint: 1, 0.05
+                BoxLayout:
+                    size_hint: 1, 0.05
+                    BoxLayout:
+                        size_hint: 0.3, 1
+                    BoxLayout:
+                        size_hint: 0.4, 1
+                        Label:
+                            size_hint: 0.4, 1
+                            text: "Year (YYYY)"
+                        Label:
+                            size_hint: 0.6, 1
+                            text: "Month"
+                    BoxLayout:
+                        size_hint: 0.3, 1
+                BoxLayout:
+                    size_hint: 1, 0.06
+                    BoxLayout:
+                        size_hint: 0.3, 1
+                    BoxLayout:
+                        size_hint: 0.4, 1
+                        BoxLayout:
+                            TextInput:
+                                id: year_input
+                                size_hint: 0.4, 1
+                                multiline: False
+                            Spinner:
+                                id: input_month_spinner
+                                on_release: root.LimitSpinner()
+                                size_hint: 0.6, 1
+                                text: "Select"
+                                values : root.manager.get_screen("main").month_list
+                    BoxLayout:
+                        size_hint: 0.3, 1
+                BoxLayout:
+                    size_hint: 1, 0.05
+                AnchorLayout:
+                    size_hint: 1, 0.1
+                    anchor_x: "center"
+                    Button:
+                        text: "Add"
+                        size_hint: None, 0.6
+                        width: "80dp"
+                        on_release:
+                            root.CheckFormFields()
+                BoxLayout:
+                    size_hint: 1, 0.04
+            BoxLayout:
+                size_hint: 0.5, 1
+
+
+<ErrorNotice>:
+    auto_dismiss: False
+    title: "Input Error"
+    size_hint: 0.3, 0.3
+    pos_hint: {"x": 0.35, "top": 0.65}
+    BoxLayout:
+        orientation: "vertical"
+        Label:
+            size_hint: 1, 0.7
+            text_size: self.size
+            valign: "top"
+            text: "Please ensure there are no missing fields and price and year inputs are numbers."
+        Button:
+            size_hint: 1, 0.3
+            text: "Close"
+            on_release: root.dismiss()
