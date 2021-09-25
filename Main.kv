@@ -18,16 +18,18 @@ WindowManager:
                     width: "220dp"
                     Spinner:
                         id: year_spinner
-                        text: "Year"
+                        text: root.year_selection
                         size_hint: 0.4, 1
-                        on_text: root.UpdateMonth()
+                        on_text: root.UpdateMonth(self.text)
                         values: root.dropdown_year
                     Spinner:
                         id: month_spinner
-                        text: "Month"
+                        text: root.month_selection
                         size_hint: 0.6, 1
                         values: root.dropdown_month
-                        on_text: root.UpdateMonthSubtotal()
+                        on_text:
+                            root.OnMonthSelection()
+                            root.SaveData()
             AnchorLayout:
                 Button:
                     text: "Time Series"
@@ -56,30 +58,18 @@ WindowManager:
                     id: main_pie
                     size_hint: 1, 0.95
                     values: root.cat_subtotal
-                    on_values: self.on_size()
             ScrollView:
                 id: pie_scroll
                 size_hint: 0.5, 1
                 do_scroll_x: False
                 do_scroll_y: True
                 BodyVerticalStack:
+                    id: sub_pie
                     size_hint: 1, None
                     height: self.minimum_height
-                    Button:
-                        text: "Pie 1"
-                        size_hint: 0.5, None
-                        height: self.width
-                        disabled: True
-                    Button:
-                        text: "Pie 2"
-                        size_hint: 0.5, None
-                        height: self.width
-                        disabled: True
-                    Button:
-                        text: "Pie 3"
-                        size_hint: 0.5, None
-                        height: self.width
-                        disabled: True
+                    year: root.year_selection
+                    month: root.month_selection
+                    m_dict: root.main_dict
         AnchorLayout:
             size_hint: 1, 0.1
             anchor_x: "right"

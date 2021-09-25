@@ -1,7 +1,8 @@
 from kivy.app import App
 from kivy.metrics import dp
-from kivy.properties import ListProperty
+from kivy.properties import ListProperty, StringProperty, DictProperty
 from kivy.uix.stacklayout import StackLayout
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.widget import Widget
 from kivy.core.window import Window
 from kivy.graphics import Ellipse, Color, Line
@@ -9,10 +10,21 @@ from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.lang import Builder
 from kivy.uix.popup import Popup
 from kivy.clock import Clock
+from kivy.uix.button import Button
 import pandas as pd
 import numpy as np
 import pickle
 import os
+
+
+def MonthToNumGen(m_list):
+    num_dict = {}
+    for index, month in enumerate(m_list):
+        index_str = str(index+1)
+        if len(index_str) == 1:
+            index_str = "0"+index_str
+        num_dict[month] = index_str
+    return num_dict
 
 
 class Month:
@@ -37,6 +49,13 @@ class Month:
             subtotal.append(self.month_dict[category]['Item Price'].sum())
         return subtotal
 
+    def getCatBreakdown(self, category):
+        cat_df = self.month_dict[category]
+        items = pd.unique(cat_df['Item Name']).tolist()
+        df = cat_df.groupby(['Item Name']).sum()
+        prices = df['Item Price'].tolist()
+        return items, prices
+
 
 class ExpenseApp(App):
     def build(self):
@@ -44,20 +63,39 @@ class ExpenseApp(App):
 
 
 class BodyVerticalStack(StackLayout):
-    pass
+    year = StringProperty()
+    month = StringProperty()
+    m_dict = DictProperty()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def on_m_dict(self, *args):
+        self.BuildPie(self.year, self.month, self.m_dict)
+
+    def BuildPie(self, year, month, m_dict):
+        self.clear_widgets()
+        dict_key = year + month_to_numeral[month]
+        month_obj = m_dict[dict_key]
+        categories = month_obj.getCategories()
+        #for category in categories:
+        #    self.add_widget(PieChart(size_hint=(0.5, None),height=self.width))
+        #    items, prices = month_obj.getCatBreakdown(category)
+        #    print(prices)
+        #    self.children[0].values = prices
 
 
 class MainWindow(Screen):
     def __init__(self, **kwargs):
         self.dropdown_month = []
         self.dropdown_year = []
+        self.year_selection = "Year"
+        self.month_selection = "Month"
         self.main_dict = {}
-        self.StartUpProcedure()
         self.year_string = None
-        self.month_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        self.month_to_numeral = self.MonthToNumGen(self.month_list)
+        self.month_list = month_list
         self.monthly_cat = []  # for pie chart labels
         self.cat_subtotal = []
+        self.StartUpProcedure()
         super().__init__(**kwargs)
 
     def StartUpProcedure(self):
@@ -65,7 +103,8 @@ class MainWindow(Screen):
         if 'data.pkl' in dir_list:
             self.LoadData()
             self.YearExtract()
-            # TODO: check if current date has entry in db, if so display automatically change the year/month selector
+            self.UpdateMonth(self.year_selection, True)
+            self.UpdateMainPie(self.year_selection, self.month_selection)
             # TODO: populate sub pie chart data lists (lists of lists)
 
     def LoadData(self):
@@ -74,12 +113,16 @@ class MainWindow(Screen):
             for key in keys:
                 self.main_dict[key] = Month()
                 self.main_dict[key].month_dict = pickle.load(f)
+            self.year_selection = pickle.load(f)
+            self.month_selection = pickle.load(f)
 
     def SaveData(self):
         with open('data.pkl', 'wb') as f:
             pickle.dump([key for key in self.main_dict], f)
             for key in self.main_dict:
                 pickle.dump(self.main_dict[key].month_dict, f)
+            pickle.dump(self.year_selection, f)
+            pickle.dump(self.month_selection, f)
 
     def ObtainCategoryList(self, all_entry_dict):
         """
@@ -94,17 +137,19 @@ class MainWindow(Screen):
                     cat_list.append(category)
         return cat_list
 
-    def UpdateMonth(self):
+    def UpdateMonth(self, year, init = False):
         self.dropdown_month = []
         num_list = []
         for key in self.main_dict:
-            if self.ids.year_spinner.text in key:
+            if year in key:
                 month_num = int(key[4:])-1
                 if month_num not in num_list:
                     num_list.append(month_num)
         num_list.sort()
-        self.dropdown_month=[self.month_list[i] for i in num_list]
-        self.ids.month_spinner.values = self.dropdown_month
+        self.dropdown_month=[month_list[i] for i in num_list]
+        if not init:
+            self.year_selection = year
+            self.ids.month_spinner.values = self.dropdown_month
 
     def YearExtract(self):
         self.dropdown_year = []
@@ -113,28 +158,24 @@ class MainWindow(Screen):
             if key_cleaned not in self.dropdown_year:
                 self.dropdown_year.append(key_cleaned)
 
-    def MonthToNumGen(self, month_list):
-        num_dict = {}
-        for index, month in enumerate(month_list):
-            index_str = str(index+1)
-            if len(index_str) == 1:
-                index_str = "0"+index_str
-            num_dict[month] = index_str
-        return num_dict
-
     def AddEntry(self, item_txt, price, category, year, month):
-        dict_key = str(year)+self.month_to_numeral[month]
+        dict_key = str(year) + month_to_numeral[month]
         if dict_key not in self.main_dict:
             self.main_dict[dict_key] = Month()
         self.main_dict[dict_key].addItem(category, item_txt, price)
         if self.ids.year_spinner.text == year and self.ids.month_spinner.text == month:
-            self.UpdateMonthSubtotal()
+            self.UpdateMainPie(self.ids.year_spinner.text, self.ids.month_spinner.text, True)
 
-    def UpdateMonthSubtotal(self):
-        main_key = self.ids.year_spinner.text + self.month_to_numeral[self.ids.month_spinner.text]
+    def OnMonthSelection(self): #to update pie chart
+        self.month_selection = self.ids.month_spinner.text
+        self.UpdateMainPie(self.ids.year_spinner.text, self.ids.month_spinner.text, True)
+
+    def UpdateMainPie(self, year, month, not_init=False):
+        main_key = year + month_to_numeral[month]
         if main_key in self.main_dict:
             self.cat_subtotal = self.main_dict[main_key].getSubtotal()
-            self.ids.main_pie.values = self.cat_subtotal
+            if not_init:
+                self.ids.main_pie.values = self.cat_subtotal
 
 
 class InputWindow(Screen):
@@ -171,7 +212,7 @@ class InputWindow(Screen):
             main_screen = self.manager.get_screen("main")
             main_screen.AddEntry(*id_list)
             main_screen.YearExtract()
-            main_screen.UpdateMonth()
+            main_screen.UpdateMonth(id_list[3])
             main_screen.SaveData()
             main_screen.ids.year_spinner.values = main_screen.dropdown_year
             self.ClearFormFields()
@@ -208,6 +249,9 @@ class PieChart(Widget):
     def CalculateComponentWeightage(self):
         self.percentage = [i/sum(self.angles)*100 for i in self.angles]
 
+    def on_values(self, *args):
+        self.on_size()
+
     def on_size(self, *args):
         self.CalculateAngle()
         self.canvas.clear()
@@ -238,10 +282,9 @@ class PieChart(Widget):
     #            self.pie[str(j)].angle_start = sum(self.angles[0:j])
     #            self.pie[str(j)].angle_end = sum(self.angles[0:j+1])
 
-# screen manager kivy
-# month_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-
+month_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+month_to_numeral = MonthToNumGen(month_list)
 kv = Builder.load_file("Main.kv")
 Window.size = (1200, 675)
 Window.minimum_height = 675
