@@ -2,7 +2,7 @@ from kivy.app import App
 from kivy.metrics import dp
 from kivy.properties import ListProperty, StringProperty, DictProperty
 from kivy.uix.stacklayout import StackLayout
-from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.widget import Widget
 from kivy.core.window import Window
 from kivy.graphics import Ellipse, Color, Line
@@ -68,20 +68,27 @@ class BodyVerticalStack(StackLayout):
     m_dict = DictProperty()
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.PieContainerList = None
 
     def on_m_dict(self, *args):
         self.BuildPie(self.year, self.month, self.m_dict)
+
+    def on_size(self, *args):
+        if self.PieContainerList:
+            for container in self.PieContainerList:
+                container.height = args[1][0]/2
 
     def BuildPie(self, year, month, m_dict):
         self.clear_widgets()
         dict_key = year + month_to_numeral[month]
         month_obj = m_dict[dict_key]
         categories = month_obj.getCategories()
-        #for category in categories:
-        #    self.add_widget(PieChart(size_hint=(0.5, None),height=self.width))
-        #    items, prices = month_obj.getCatBreakdown(category)
-        #    print(prices)
-        #    self.children[0].values = prices
+        self.PieContainerList = [RelativeLayout(size_hint=(0.5,None),height=300) for i in range(len(categories))]
+        for index,category in enumerate(categories):
+            self.add_widget(self.PieContainerList[index])
+            self.PieContainerList[index].add_widget(PieChart())
+            items, prices = month_obj.getCatBreakdown(category)
+            self.PieContainerList[index].children[0].values = prices
 
 
 class MainWindow(Screen):
