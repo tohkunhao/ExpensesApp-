@@ -176,6 +176,7 @@ class MainWindow(Screen):
     def OnMonthSelection(self): #to update pie chart
         self.month_selection = self.ids.month_spinner.text
         self.UpdateMainPie(self.ids.year_spinner.text, self.ids.month_spinner.text, True)
+        self.ids.sub_pie.BuildPie(self.ids.year_spinner.text, self.ids.month_spinner.text,self.main_dict)
 
     def UpdateMainPie(self, year, month, not_init=False):
         main_key = year + month_to_numeral[month]
@@ -278,7 +279,7 @@ class PieChart(Widget):
     # TODO: Add outline to pie chart
     # TODO: integrate title into pie chart
 
-    #def value_change(self):  # might not be needed
+    #def value_change(self):
     #    self.CalculateAngle()
     #    for j in range(len(self.values)):
     #        if j == 0:
@@ -289,11 +290,11 @@ class PieChart(Widget):
     #            self.pie[str(j)].angle_start = sum(self.angles[0:j])
     #            self.pie[str(j)].angle_end = sum(self.angles[0:j+1])
 
-
-month_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-month_to_numeral = MonthToNumGen(month_list)
-kv = Builder.load_file("Main.kv")
-Window.size = (1200, 675)
-Window.minimum_height = 675
-Window.minimum_width = 1200
-ExpenseApp().run()
+if __name__ == "__main__":
+    month_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    month_to_numeral = MonthToNumGen(month_list)
+    kv = Builder.load_file("Main.kv")
+    Window.size = (1200, 675)
+    Window.minimum_height = 675
+    Window.minimum_width = 1200
+    ExpenseApp().run()
